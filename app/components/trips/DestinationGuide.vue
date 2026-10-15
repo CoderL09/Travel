@@ -1,13 +1,13 @@
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   guide: { type: Object, default: null },
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' }
-})
+});
 
-const emit = defineEmits(['generate'])
+const emit = defineEmits(['generate']);
 
 const sections = [
   { key: 'overview', label: '城市速览', icon: '✦' },
@@ -15,17 +15,21 @@ const sections = [
   { key: 'transport', label: '交通指南', icon: '⇢' },
   { key: 'culture', label: '文化礼仪', icon: '◈' },
   { key: 'tips', label: '避坑提示', icon: '◉' }
-]
+];
 
 const guideSections = computed(() => {
-  if (!props.guide || typeof props.guide !== 'object') return []
-  return sections.filter(section => typeof props.guide[section.key] === 'string' && props.guide[section.key].trim())
-})
+  if (!props.guide || typeof props.guide !== 'object') return [];
+  return sections.filter(
+    (section) => typeof props.guide[section.key] === 'string' && props.guide[section.key].trim()
+  );
+});
 
 const dayPlans = computed(() => {
-  if (!props.guide || !Array.isArray(props.guide.dayPlans)) return []
-  return props.guide.dayPlans.filter(item => item && typeof item.plan === 'string' && item.plan.trim())
-})
+  if (!props.guide || !Array.isArray(props.guide.dayPlans)) return [];
+  return props.guide.dayPlans.filter(
+    (item) => item && typeof item.plan === 'string' && item.plan.trim()
+  );
+});
 </script>
 
 <template>
@@ -95,7 +99,7 @@ const dayPlans = computed(() => {
 .section-title h2 {
   margin: 8px 0 4px;
   font-size: 24px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .section-title p {
@@ -241,7 +245,7 @@ const dayPlans = computed(() => {
 }
 
 .generate:disabled {
-  opacity: .65;
+  opacity: 0.65;
   cursor: wait;
 }
 

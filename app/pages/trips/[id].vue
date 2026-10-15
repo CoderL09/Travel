@@ -1,89 +1,94 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from '#imports'
-import { useTrips } from '~/composables/useTrips'
-import TripDetailHero from '~/components/trips/TripDetailHero.vue'
-import TripStatsBar from '~/components/trips/TripStatsBar.vue'
-import TripInfoSidebar from '~/components/trips/TripInfoSidebar.vue'
-import ItinerarySection from '~/components/trips/ItinerarySection.vue'
-import ActivityDetailModal from '~/components/trips/ActivityDetailModal.vue'
-import DestinationGuide from '~/components/trips/DestinationGuide.vue'
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from '#imports';
+import { useTrips } from '~/composables/useTrips';
+import TripDetailHero from '~/components/trips/TripDetailHero.vue';
+import TripStatsBar from '~/components/trips/TripStatsBar.vue';
+import TripInfoSidebar from '~/components/trips/TripInfoSidebar.vue';
+import ItinerarySection from '~/components/trips/ItinerarySection.vue';
+import ActivityDetailModal from '~/components/trips/ActivityDetailModal.vue';
+import DestinationGuide from '~/components/trips/DestinationGuide.vue';
 
-const route = useRoute()
-const { getTrip, updateTrip, generateGuide, deleteTrip } = useTrips()
+const route = useRoute();
+const { getTrip, updateTrip, generateGuide, deleteTrip } = useTrips();
 
-const clone = (value) => JSON.parse(JSON.stringify(value))
+const clone = (value) => JSON.parse(JSON.stringify(value));
 
-const record = ref(null)
-const ready = ref(false)
-const activeActivity = ref(null)
-const guideLoading = ref(false)
-const guideError = ref('')
-const toast = ref('')
+const record = ref(null);
+const ready = ref(false);
+const activeActivity = ref(null);
+const guideLoading = ref(false);
+const guideError = ref('');
+const weatherLoading = ref(false);
+const weatherError = ref('');
+const toast = ref('');
 
 onMounted(async () => {
   try {
-    record.value = await getTrip(String(route.params.id))
+    record.value = await getTrip(String(route.params.id));
   } catch (error) {
-    console.error('加载旅行失败：', error)
+    console.error('加载旅行失败：', error);
   }
-  ready.value = true
-})
+  ready.value = true;
+});
 
-const trip = computed(() => record.value?.trip || {})
-const days = computed(() => record.value?.days || [])
+const trip = computed(() => record.value?.trip || {});
+const days = computed(() => record.value?.days || []);
+const weather = computed(() =>
+  trip.value.weatherData && typeof trip.value.weatherData === 'object'
+    ? trip.value.weatherData
+    : null
+);
 
 const dayCount = computed(() => {
-  const { startDate, endDate } = trip.value
+  const { startDate, endDate } = trip.value;
   if (startDate && endDate) {
     const diff = Math.round(
       (Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`)) / 86400000
-    )
-    if (Number.isFinite(diff) && diff >= 0) return diff + 1
+    );
+    if (Number.isFinite(diff) && diff >= 0) return diff + 1;
   }
-  return days.value.length || 0
-})
+  return days.value.length || 0;
+});
 
 const status = computed(() => {
-  const start = trip.value.startDate
-  const end = trip.value.endDate
+  const start = trip.value.startDate;
+  const end = trip.value.endDate;
 
-  if (!start || !end) return '草稿'
+  if (!start || !end) return '草稿';
 
-  const now = new Date()
+  const now = new Date();
   const today = [
     now.getFullYear(),
     String(now.getMonth() + 1).padStart(2, '0'),
     String(now.getDate()).padStart(2, '0')
-  ].join('-')
+  ].join('-');
 
-  if (today < start) return '即将出发'
-  if (today > end) return '已结束'
-  return '旅行中'
-})
+  if (today < start) return '即将出发';
+  if (today > end) return '已结束';
+  return '旅行中';
+});
 
 const countdown = computed(() => {
-  const start = trip.value.startDate
-  if (!start) return null
+  const start = trip.value.startDate;
+  if (!start) return null;
 
-  const now = new Date()
-  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
-  const startUtc = Date.parse(`${start}T00:00:00Z`)
-  if (!Number.isFinite(startUtc)) return null
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const startUtc = Date.parse(`${start}T00:00:00Z`);
+  if (!Number.isFinite(startUtc)) return null;
 
-  const diff = Math.round((startUtc - todayUtc) / 86400000)
-  if (diff > 0) return { label: `距出发还有 ${diff} 天` }
-  if (diff === 0) return { label: '今天出发' }
-  return { label: `已出发 ${Math.abs(diff)} 天` }
-})
+  const diff = Math.round((startUtc - todayUtc) / 86400000);
+  if (diff > 0) return { label: `距出发还有 ${diff} 天` };
+  if (diff === 0) return { label: '今天出发' };
+  return { label: `已出发 ${Math.abs(diff)} 天` };
+});
 
-const allActivities = computed(() =>
-  days.value.flatMap(day => day?.activities || [])
-)
+const allActivities = computed(() => days.value.flatMap((day) => day?.activities || []));
 
-const completedCount = computed(() =>
-  allActivities.value.filter(activity => activity.completed).length
-)
+const completedCount = computed(
+  () => allActivities.value.filter((activity) => activity.completed).length
+);
 
 const stats = computed(() => ({
   days: dayCount.value,
@@ -95,79 +100,97 @@ const stats = computed(() => ({
     Number(trip.value.budget) / (trip.value.travelers || 1)
   ).toLocaleString(),
   preferences: trip.value.preferences || []
-}))
+}));
 
-const title = computed(() => record.value?.title || trip.value.destination || '未命名旅行')
-const guide = computed(() => trip.value.guide || null)
+const title = computed(() => record.value?.title || trip.value.destination || '未命名旅行');
+const guide = computed(() => trip.value.guide || null);
 
 function notify(message) {
-  toast.value = message
+  toast.value = message;
 }
 
 async function toggleActivity({ dayIndex, id }) {
-  const activities = days.value[dayIndex]?.activities
-  const activity = activities?.find(item => item.id === id)
-  if (!activity || !record.value) return
+  const activities = days.value[dayIndex]?.activities;
+  const activity = activities?.find((item) => item.id === id);
+  if (!activity || !record.value) return;
 
-  activity.completed = !activity.completed
+  activity.completed = !activity.completed;
   try {
-    record.value = await updateTrip(record.value.id, { days: clone(days.value) })
+    record.value = await updateTrip(record.value.id, { days: clone(days.value) });
   } catch (error) {
-    activity.completed = !activity.completed
-    notify(error?.data?.message || '更新失败，请稍后重试')
+    activity.completed = !activity.completed;
+    notify(error?.data?.message || '更新失败，请稍后重试');
   }
 }
 
 async function togglePack(name) {
-  if (!record.value) return
-  const packed = Array.isArray(trip.value.packedItems) ? [...trip.value.packedItems] : []
-  const index = packed.indexOf(name)
-  const hadItem = index >= 0
-  if (hadItem) packed.splice(index, 1)
-  else packed.push(name)
-  trip.value.packedItems = packed
+  if (!record.value) return;
+  const packed = Array.isArray(trip.value.packedItems) ? [...trip.value.packedItems] : [];
+  const index = packed.indexOf(name);
+  const hadItem = index >= 0;
+  if (hadItem) packed.splice(index, 1);
+  else packed.push(name);
+  trip.value.packedItems = packed;
 
   try {
-    record.value = await updateTrip(record.value.id, { trip: clone(trip.value) })
+    record.value = await updateTrip(record.value.id, { trip: clone(trip.value) });
   } catch (error) {
-    if (hadItem) packed.splice(index, 0, name)
-    else packed.pop()
-    trip.value.packedItems = packed
-    notify(error?.data?.message || '更新失败，请稍后重试')
+    if (hadItem) packed.splice(index, 0, name);
+    else packed.pop();
+    trip.value.packedItems = packed;
+    notify(error?.data?.message || '更新失败，请稍后重试');
   }
 }
 
 function openActivity({ dayIndex, activity }) {
-  activeActivity.value = { dayIndex, activity }
+  activeActivity.value = { dayIndex, activity };
+}
+
+async function handleRefreshWeather() {
+  if (!record.value) return;
+  weatherLoading.value = true;
+  weatherError.value = '';
+  try {
+    const data = await $fetch(`/api/trips/${encodeURIComponent(record.value.id)}/weather`);
+    record.value = {
+      ...record.value,
+      trip: { ...trip.value, weatherData: data }
+    };
+    notify('天气预报已更新');
+  } catch (error) {
+    weatherError.value = error?.data?.message || '天气获取失败，请稍后重试';
+  } finally {
+    weatherLoading.value = false;
+  }
 }
 
 async function handleGenerateGuide() {
-  if (!record.value) return
-  guideLoading.value = true
-  guideError.value = ''
+  if (!record.value) return;
+  guideLoading.value = true;
+  guideError.value = '';
   try {
-    record.value = await generateGuide(record.value.id)
-    notify('AI 目的地攻略已生成')
+    record.value = await generateGuide(record.value.id);
+    notify('AI 目的地攻略已生成');
   } catch (error) {
-    guideError.value = error?.data?.message || '攻略生成失败，请稍后重试'
+    guideError.value = error?.data?.message || '攻略生成失败，请稍后重试';
   } finally {
-    guideLoading.value = false
+    guideLoading.value = false;
   }
 }
 
 async function handleDelete() {
-  if (!record.value) return
-  if (!window.confirm('确定删除这份旅行计划吗？此操作不可恢复。')) return
+  if (!record.value) return;
+  if (!window.confirm('确定删除这份旅行计划吗？此操作不可恢复。')) return;
   try {
-    await deleteTrip(record.value.id)
-    await navigateTo('/trips')
+    await deleteTrip(record.value.id);
+    await navigateTo('/trips');
   } catch (error) {
-    notify(error?.data?.message || '删除失败，请稍后重试')
+    notify(error?.data?.message || '删除失败，请稍后重试');
   }
 }
 
 function handlePrint() {
-  window.print()
+  window.print();
 }
 </script>
 
@@ -188,10 +211,15 @@ function handlePrint() {
         <div class="detail-layout">
           <div class="detail-sidebar no-print">
             <TripInfoSidebar
+              :id="record.id"
               :trip="trip"
+              :weather="weather"
+              :weather-loading="weatherLoading"
+              :weather-error="weatherError"
               @delete="handleDelete"
               @print="handlePrint"
               @toggle-pack="togglePack"
+              @refresh-weather="handleRefreshWeather"
             />
           </div>
 
@@ -234,7 +262,7 @@ function handlePrint() {
 
     <div v-if="toast" class="toast" role="status">
       {{ toast }}
-      <button @click="toast = ''" aria-label="关闭提示">×</button>
+      <button aria-label="关闭提示" @click="toast = ''">×</button>
     </div>
   </main>
 </template>
@@ -301,7 +329,7 @@ function handlePrint() {
   background: #1c355a;
   color: #fff;
   font-size: 13px;
-  box-shadow: 0 10px 25px rgba(32, 51, 76, .2);
+  box-shadow: 0 10px 25px rgba(32, 51, 76, 0.2);
 }
 
 .toast button {

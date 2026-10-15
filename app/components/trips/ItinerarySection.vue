@@ -1,36 +1,39 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
   trip: { type: Object, required: true },
   days: { type: Array, required: true },
   completedCount: { type: Number, default: 0 },
   totalCount: { type: Number, default: 0 }
-})
+});
 
-const emit = defineEmits(['toggle-activity', 'open-activity'])
+const emit = defineEmits(['toggle-activity', 'open-activity']);
 
-const activeDay = ref(0)
-const viewMode = ref('day')
+const activeDay = ref(0);
+const viewMode = ref('day');
 
-watch(() => props.days.length, (length) => {
-  if (activeDay.value >= length) activeDay.value = Math.max(0, length - 1)
-})
+watch(
+  () => props.days.length,
+  (length) => {
+    if (activeDay.value >= length) activeDay.value = Math.max(0, length - 1);
+  }
+);
 
-const currentDay = computed(() => props.days[activeDay.value] ?? null)
+const currentDay = computed(() => props.days[activeDay.value] ?? null);
 
 const progressPercent = computed(() => {
-  if (!props.totalCount) return 0
-  return Math.round((props.completedCount / props.totalCount) * 100)
-})
+  if (!props.totalCount) return 0;
+  return Math.round((props.completedCount / props.totalCount) * 100);
+});
 
 function dateLabel(offset) {
-  const start = props.trip.startDate
-  if (!start) return ''
-  const d = new Date(`${start}T12:00:00`)
-  if (Number.isNaN(d.getTime())) return ''
-  d.setDate(d.getDate() + offset)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
+  const start = props.trip.startDate;
+  if (!start) return '';
+  const d = new Date(`${start}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  d.setDate(d.getDate() + offset);
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 </script>
 
@@ -70,26 +73,16 @@ function dateLabel(offset) {
       </div>
 
       <div class="view-toggle">
-        <button
-          type="button"
-          :class="{ active: viewMode === 'day' }"
-          @click="viewMode = 'day'"
-        >
+        <button type="button" :class="{ active: viewMode === 'day' }" @click="viewMode = 'day'">
           单日
         </button>
-        <button
-          type="button"
-          :class="{ active: viewMode === 'all' }"
-          @click="viewMode = 'all'"
-        >
+        <button type="button" :class="{ active: viewMode === 'all' }" @click="viewMode = 'all'">
           全部
         </button>
       </div>
     </div>
 
-    <div v-if="!days.length" class="empty">
-      这份旅行还没有每日行程。
-    </div>
+    <div v-if="!days.length" class="empty">这份旅行还没有每日行程。</div>
 
     <template v-else-if="viewMode === 'day'">
       <div v-if="currentDay" class="day-block">
@@ -98,9 +91,7 @@ function dateLabel(offset) {
           <span>{{ dateLabel(activeDay) }}</span>
         </div>
 
-        <p v-if="!currentDay.activities?.length" class="empty small">
-          这一天还没有安排活动。
-        </p>
+        <p v-if="!currentDay.activities?.length" class="empty small">这一天还没有安排活动。</p>
 
         <div v-else class="timeline">
           <article
@@ -155,9 +146,7 @@ function dateLabel(offset) {
           <span>{{ dateLabel(dayIndex) }}</span>
         </div>
 
-        <p v-if="!day.activities?.length" class="empty small">
-          这一天还没有安排活动。
-        </p>
+        <p v-if="!day.activities?.length" class="empty small">这一天还没有安排活动。</p>
 
         <div v-else class="timeline">
           <article
@@ -234,7 +223,7 @@ function dateLabel(offset) {
 .section-title h2 {
   margin: 8px 0 4px;
   font-size: 24px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .section-title p {
@@ -273,7 +262,7 @@ function dateLabel(offset) {
   height: 100%;
   border-radius: 100px;
   background: linear-gradient(90deg, #3478ff, #5a8dff);
-  transition: width .3s ease;
+  transition: width 0.3s ease;
 }
 
 .controls {
@@ -318,7 +307,7 @@ function dateLabel(offset) {
 
 .day-tabs small {
   font-size: 11px;
-  opacity: .72;
+  opacity: 0.72;
 }
 
 .view-toggle {
@@ -342,7 +331,7 @@ function dateLabel(offset) {
   background: #fff;
   color: #3478ff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(31, 51, 88, .08);
+  box-shadow: 0 2px 8px rgba(31, 51, 88, 0.08);
 }
 
 .day-block {
@@ -383,16 +372,18 @@ function dateLabel(offset) {
   padding: 18px;
   border: 1px solid #edf0f6;
   border-radius: 16px;
-  transition: box-shadow .2s, border-color .2s;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
 }
 
 .activity-card:hover {
   border-color: #d9e4f8;
-  box-shadow: 0 8px 22px rgba(31, 51, 88, .06);
+  box-shadow: 0 8px 22px rgba(31, 51, 88, 0.06);
 }
 
 .activity-card.done {
-  opacity: .72;
+  opacity: 0.72;
 }
 
 .activity-card.done h4 {
@@ -412,7 +403,9 @@ function dateLabel(offset) {
   color: #fff;
   font-size: 14px;
   cursor: pointer;
-  transition: background .2s, border-color .2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .check:hover {

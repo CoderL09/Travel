@@ -1,0 +1,14 @@
+node_modules
+.nuxt
+.output
+.nitro
+.data
+.cache
+dist
+app/generated
+prisma/migrations
+package-lock.json
+*.log
+playwright-report
+test-results
+coverage

@@ -1,72 +1,72 @@
-
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   record: {
     type: Object,
     required: true
   }
-})
+});
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete']);
 
-const trip = computed(() => props.record.trip || {})
+const trip = computed(() => props.record.trip || {});
 
-const destination = computed(() =>
-  trip.value.destination || '未命名目的地'
-)
+const destination = computed(() => trip.value.destination || '未命名目的地');
 
 const dateText = computed(() => {
-  const start = trip.value.startDate
-  const end = trip.value.endDate
+  const start = trip.value.startDate;
+  const end = trip.value.endDate;
 
-  if (!start) return '日期待定'
-  return `${start} — ${end || start}`
-})
+  if (!start) return '日期待定';
+  return `${start} — ${end || start}`;
+});
 
 const dayCount = computed(() => {
-  const start = trip.value.startDate
-  const end = trip.value.endDate
+  const start = trip.value.startDate;
+  const end = trip.value.endDate;
 
   if (!start || !end) {
-    return props.record.days?.length || 0
+    return props.record.days?.length || 0;
   }
 
-  const a = Date.parse(`${start}T00:00:00Z`)
-  const b = Date.parse(`${end}T00:00:00Z`)
+  const a = Date.parse(`${start}T00:00:00Z`);
+  const b = Date.parse(`${end}T00:00:00Z`);
 
   if (!Number.isFinite(a) || !Number.isFinite(b)) {
-    return props.record.days?.length || 0
+    return props.record.days?.length || 0;
   }
 
-  return Math.max(1, Math.round((b - a) / 86400000) + 1)
-})
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+});
 
 const status = computed(() => {
-  const start = trip.value.startDate
-  const end = trip.value.endDate
+  const start = trip.value.startDate;
+  const end = trip.value.endDate;
 
-  if (!start || !end) return '草稿'
+  if (!start || !end) return '草稿';
 
-  const today = new Date()
+  const today = new Date();
   const localToday = [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, '0'),
     String(today.getDate()).padStart(2, '0')
-  ].join('-')
+  ].join('-');
 
-  if (localToday < start) return '即将出发'
-  if (localToday > end) return '已结束'
-  return '旅行中'
-})
+  if (localToday < start) return '即将出发';
+  if (localToday > end) return '已结束';
+  return '旅行中';
+});
 
-const statusClass = computed(() => ({
-  '即将出发': 'upcoming',
-  '旅行中': 'ongoing',
-  '已结束': 'finished',
-  '草稿': 'draft'
-}[status.value]))
+const statusClass = computed(
+  () =>
+    ({
+      即将出发: 'upcoming',
+      旅行中: 'ongoing',
+      已结束: 'finished',
+      草稿: 'draft'
+    })[status.value]
+);
 </script>
 
 <template>
@@ -95,26 +95,15 @@ const statusClass = computed(() => ({
       <div class="meta">
         <span>{{ dayCount }} 天</span>
         <span>{{ trip.travelers || 1 }} 人</span>
-        <span v-if="trip.budget">
-          预算 ¥{{ Number(trip.budget).toLocaleString() }}
-        </span>
+        <span v-if="trip.budget"> 预算 ¥{{ Number(trip.budget).toLocaleString() }} </span>
       </div>
 
       <div class="card-footer">
-        <NuxtLink
-          class="detail-link"
-          :to="`/trips/${record.id}`"
-        >
+        <NuxtLink class="detail-link" :to="`/trips/${record.id}`">
           查看行程 <span>↗</span>
         </NuxtLink>
 
-        <button
-          type="button"
-          class="delete-button"
-          @click="emit('delete', record.id)"
-        >
-          删除
-        </button>
+        <button type="button" class="delete-button" @click="emit('delete', record.id)">删除</button>
       </div>
     </div>
   </article>
@@ -126,12 +115,14 @@ const statusClass = computed(() => ({
   border: 1px solid #e9edf5;
   border-radius: 22px;
   background: #fff;
-  transition: transform .2s, box-shadow .2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .trip-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(29, 53, 87, .08);
+  box-shadow: 0 16px 40px rgba(29, 53, 87, 0.08);
 }
 
 .card-top {
@@ -139,12 +130,7 @@ const statusClass = computed(() => ({
   min-height: 205px;
   overflow: hidden;
   padding: 24px;
-  background: linear-gradient(
-    135deg,
-    #e7efff 0%,
-    #d8e6ff 55%,
-    #e9e6ff 100%
-  );
+  background: linear-gradient(135deg, #e7efff 0%, #d8e6ff 55%, #e9e6ff 100%);
 }
 
 .eyebrow {
@@ -168,9 +154,15 @@ const statusClass = computed(() => ({
   font-size: 12px;
 }
 
-.status.ongoing { color: #15803d; }
-.status.finished { color: #64748b; }
-.status.draft { color: #b45309; }
+.status.ongoing {
+  color: #15803d;
+}
+.status.finished {
+  color: #64748b;
+}
+.status.draft {
+  color: #b45309;
+}
 
 .destination {
   position: relative;
@@ -203,7 +195,7 @@ const statusClass = computed(() => ({
   bottom: -95px;
   width: 250px;
   height: 250px;
-  border: 45px solid rgba(255,255,255,.35);
+  border: 45px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
 }
 

@@ -1,4 +1,5 @@
 ﻿export default defineNuxtConfig({
+  modules: ['@nuxt/eslint'],
   runtimeConfig: {
     deepseekApiKey: '',
     databaseUrl: ''
@@ -11,4 +12,4 @@
       inline: [/[\\/]node_modules[\\/]nuxt[\\/]dist[\\/]/]
     }
   }
-})
+});

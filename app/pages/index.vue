@@ -1,54 +1,41 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { attractions } from '~/data/attractions'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { attractions } from '~/data/attractions';
 
-const currentIndex = ref(0)
-const showInfo = ref(false)
+const currentIndex = ref(0);
+const showInfo = ref(false);
 
-
-
-
-let timer
-
+let timer;
 
 function startCarousel() {
-  clearInterval(timer)
+  clearInterval(timer);
 
   timer = setInterval(() => {
-    currentIndex.value =
-      (currentIndex.value + 1) % attractions.length
-  }, 3000)
+    currentIndex.value = (currentIndex.value + 1) % attractions.length;
+  }, 3000);
 }
-
-
 
 function showAttractionInfo() {
-  showInfo.value = true
-  clearInterval(timer)
+  showInfo.value = true;
+  clearInterval(timer);
 }
-
 
 function closeAttractionInfo() {
-  showInfo.value = false
-  startCarousel()
+  showInfo.value = false;
+  startCarousel();
 }
 
-
 onMounted(() => {
-  startCarousel()
-})
+  startCarousel();
+});
 
 onUnmounted(() => {
-  clearInterval(timer)
-})
+  clearInterval(timer);
+});
 </script>
 
 <template>
-  <section
-    class="hero"
-    @click.self="showAttractionInfo"
-  >
-   
+  <section class="hero" @click.self="showAttractionInfo">
     <Transition name="fade">
       <div
         :key="currentIndex"
@@ -65,14 +52,10 @@ onUnmounted(() => {
       ></div>
     </Transition>
 
-   
     <div class="hero-content">
       <h1>让 AI 带你探索世界</h1>
 
-      <p>
-        输入目的地、预算和旅行偏好，
-        AI 为你生成专属行程。
-      </p>
+      <p>输入目的地、预算和旅行偏好， AI 为你生成专属行程。</p>
 
       <NuxtLink to="/plan" class="hero-cta">
         开始规划旅行
@@ -81,24 +64,18 @@ onUnmounted(() => {
     </div>
 
     <Transition name="fade">
-      <div
-        v-if="showInfo"
-        class="attraction-info"
-      >
+      <div v-if="showInfo" class="attraction-info">
         <h2>{{ attractions[currentIndex].name }}</h2>
 
         <p class="attraction-country">{{ attractions[currentIndex].country }}</p>
 
         <p class="attraction-description">{{ attractions[currentIndex].description }}</p>
 
-        <button @click="closeAttractionInfo">
-          关闭
-        </button>
+        <button @click="closeAttractionInfo">关闭</button>
       </div>
     </Transition>
   </section>
 </template>
-
 
 <style scoped>
 .hero {
@@ -147,50 +124,51 @@ onUnmounted(() => {
   color: white;
   margin: 0 0 20px;
 
-  text-shadow: 0 4px 16px  rgba(0,0,0,0.5);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
-.hero-content p{
-    font-size: 18px;
-    font-weight: 400;       
-    line-height: 1.8;       
-    letter-spacing: 0.5px; 
+.hero-content p {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
 
-     color: rgba(255, 255, 255, 0.85); 
-     max-width: 600px; 
-     margin: 0 auto;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.hero-cta{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap:10px;
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 
-    padding: 14px 30px;
-    margin-top: 20px;
+  padding: 14px 30px;
+  margin-top: 20px;
 
-    font-size: 17px;
-    font-weight: 600;
-    color: white;
-    text-decoration: none;
+  font-size: 17px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
 
-     background-color:  rgba(255, 255, 255, 0.16);
-     backdrop-filter: blur(12px);
-     -webkit-backdrop-filter: blur(12px);  
-     border-radius: 50px;        
+  background-color: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 50px;
 
-     border:1px solid rgba(255,255,255,0.4);
-     border-radius:50px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50px;
 
-     transition:background-color 0.3s ease,transform 0.3s ease
+  transition:
+    background-color 0.3s ease,
+    transform 0.3s ease;
 }
 
-.hero-cta:hover{
-    background-color: rgba(255,255,255,0.28);
-    transform: translateY(-3px);
+.hero-cta:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-3px);
 }
-
 
 .attraction-info {
   position: absolute;
@@ -198,7 +176,6 @@ onUnmounted(() => {
   bottom: 30px;
   z-index: 2;
 
-  
   width: 280px;
   max-width: calc(100% - 60px);
 
@@ -210,27 +187,23 @@ onUnmounted(() => {
   border-radius: 16px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   text-align: left;
-
 }
-
 
 .attraction-info h2 {
-  font-size: 22px;       
-  font-weight: 700;      
-  line-height: 1.3;      
-  margin: 0 0 8px;      
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 8px;
   color: white;
 }
-
 
 .attraction-country {
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 1px;   
+  letter-spacing: 1px;
   color: rgba(255, 255, 255, 0.65);
   margin: 0 0 14px;
 }
-
 
 .attraction-description {
   font-size: 14px;
@@ -240,36 +213,28 @@ onUnmounted(() => {
   margin: 0 0 18px;
 }
 
-
-
 .attraction-info button {
-  padding: 8px 18px;        
+  padding: 8px 18px;
 
-  font-size: 13px;         
-  font-weight: 500;         
-  color: white;             
-
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
 
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 
- 
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
 
- 
   cursor: pointer;
 
- 
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-
 
   transition:
     background-color 0.3s ease,
     transform 0.3s ease;
 }
-
 
 .attraction-info button:hover {
   background-color: rgba(255, 255, 255, 0.28);
@@ -286,9 +251,6 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-
-
-
 @media (max-width: 900px) {
   .hero-content h1 {
     font-size: 40px;
@@ -296,7 +258,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
- 
   .hero-content h1 {
     font-size: 32px;
   }
@@ -308,9 +269,7 @@ onUnmounted(() => {
   }
 }
 
-
 @media (max-width: 480px) {
-  
   .hero-content {
     padding: 16px;
   }
@@ -319,7 +278,7 @@ onUnmounted(() => {
     font-size: 24px;
   }
 
-  .hero-content p{
+  .hero-content p {
     font-size: 15px;
     line-height: 1.7;
   }

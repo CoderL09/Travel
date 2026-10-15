@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -7,20 +7,23 @@ const props = defineProps({
   status: { type: String, required: true },
   countdown: { type: Object, default: null },
   dayCount: { type: Number, default: 0 }
-})
+});
 
-const heroImage = computed(() => props.trip.image || '/images/4.jpg')
+const heroImage = computed(() => props.trip.image || '/images/4.jpg');
 
-const statusClass = computed(() => ({
-  '即将出发': 'upcoming',
-  '旅行中': 'ongoing',
-  '已结束': 'finished',
-  '草稿': 'draft'
-}[props.status] || ''))
+const statusClass = computed(
+  () =>
+    ({
+      即将出发: 'upcoming',
+      旅行中: 'ongoing',
+      已结束: 'finished',
+      草稿: 'draft'
+    })[props.status] || ''
+);
 
 function formatDate(date) {
-  if (!date) return '待定'
-  return String(date).replaceAll('-', '.')
+  if (!date) return '待定';
+  return String(date).replaceAll('-', '.');
 }
 </script>
 
@@ -42,17 +45,14 @@ function formatDate(date) {
       <h1>{{ title }}</h1>
 
       <p class="hero-sub">
-        {{ trip.destination }} ·
-        {{ formatDate(trip.startDate) }} — {{ formatDate(trip.endDate) }} ·
+        {{ trip.destination }} · {{ formatDate(trip.startDate) }} — {{ formatDate(trip.endDate) }} ·
         {{ dayCount }} 天
       </p>
 
       <div class="hero-chips">
         <span v-if="countdown" class="countdown">✈ {{ countdown.label }}</span>
         <span>{{ trip.travelers || 1 }} 人同行</span>
-        <span v-if="trip.budget">
-          预算 ¥{{ Number(trip.budget).toLocaleString() }}
-        </span>
+        <span v-if="trip.budget"> 预算 ¥{{ Number(trip.budget).toLocaleString() }} </span>
       </div>
     </div>
   </header>
@@ -76,10 +76,10 @@ function formatDate(date) {
 .back-link {
   display: inline-block;
   margin-bottom: 34px;
-  color: rgba(255, 255, 255, .82);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 14px;
   text-decoration: none;
-  transition: color .2s;
+  transition: color 0.2s;
 }
 
 .back-link:hover {
@@ -102,27 +102,35 @@ function formatDate(date) {
 .status {
   padding: 6px 13px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(4px);
   font-size: 12px;
   letter-spacing: 1px;
 }
 
-.status.upcoming { color: #ffd27a; }
-.status.ongoing { color: #7ee2a8; }
-.status.finished { color: #cdd7e6; }
-.status.draft { color: #ffc6a0; }
+.status.upcoming {
+  color: #ffd27a;
+}
+.status.ongoing {
+  color: #7ee2a8;
+}
+.status.finished {
+  color: #cdd7e6;
+}
+.status.draft {
+  color: #ffc6a0;
+}
 
 h1 {
   margin: 18px 0 12px;
   font-size: clamp(32px, 5vw, 50px);
   letter-spacing: -1px;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, .3);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.3);
 }
 
 .hero-sub {
   margin: 0;
-  color: rgba(255, 255, 255, .85);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
 }
 
@@ -136,13 +144,13 @@ h1 {
 .hero-chips span {
   padding: 9px 15px;
   border-radius: 11px;
-  background: rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(4px);
   font-size: 13px;
 }
 
 .hero-chips .countdown {
-  background: rgba(52, 120, 255, .9);
+  background: rgba(52, 120, 255, 0.9);
 }
 
 @media (max-width: 650px) {

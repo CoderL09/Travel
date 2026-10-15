@@ -1,13 +1,5 @@
-
 <script setup>
-import {
-  Pencil,
-  MapPin,
-  CalendarDays,
-  UsersRound,
-  Wallet,
-  Tags
-} from 'lucide-vue-next'
+import { Pencil, MapPin, CalendarDays, UsersRound, Wallet, Tags } from 'lucide-vue-next';
 
 defineProps({
   destination: {
@@ -34,29 +26,28 @@ defineProps({
     type: Array,
     default: () => ['Food', 'Nature', 'Culture']
   }
-})
+});
 
-const emit = defineEmits(['edit'])
+const emit = defineEmits(['edit']);
 
 function formatDate(dateString) {
-  if (!dateString) return ''
+  if (!dateString) return '';
 
-  const [year, month, day] = dateString.split('-').map(Number)
-  return new Date(year, month - 1, day)
-    .toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    })
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
 }
 
 function formatDateRange(start, end) {
-  if (!start || !end) return 'Select travel dates'
+  if (!start || !end) return 'Select travel dates';
 
-  const startText = formatDate(start)
-  const endText = formatDate(end)
-  const year = end.split('-')[0]
+  const startText = formatDate(start);
+  const endText = formatDate(end);
+  const year = end.split('-')[0];
 
-  return `${startText} – ${endText}, ${year}`
+  return `${startText} – ${endText}, ${year}`;
 }
 </script>
 
@@ -65,12 +56,7 @@ function formatDateRange(start, end) {
     <header class="overview-header">
       <h3>Trip Overview</h3>
 
-      <button
-        type="button"
-        class="edit-button"
-        aria-label="Edit trip"
-        @click="emit('edit')"
-      >
+      <button type="button" class="edit-button" aria-label="Edit trip" @click="emit('edit')">
         <Pencil :size="15" />
       </button>
     </header>
@@ -116,9 +102,7 @@ function formatDateRange(start, end) {
         </span>
         <div class="detail-content">
           <span class="detail-label">Budget</span>
-          <span class="detail-value">
-            ¥ {{ budget.toLocaleString() }}
-          </span>
+          <span class="detail-value"> ¥ {{ budget.toLocaleString() }} </span>
         </div>
       </div>
 

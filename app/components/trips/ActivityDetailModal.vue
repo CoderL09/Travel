@@ -1,9 +1,9 @@
 <script setup>
 defineProps({
   activity: { type: Object, required: true }
-})
+});
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close']);
 </script>
 
 <template>
@@ -15,9 +15,7 @@ const emit = defineEmits(['close'])
         <div class="modal-head">
           <span class="eyebrow">ACTIVITY DETAIL</span>
           <h2>{{ activity.name }}</h2>
-          <p class="period">
-            {{ activity.period }} · {{ activity.time }}
-          </p>
+          <p class="period">{{ activity.period }} · {{ activity.time }}</p>
         </div>
 
         <p class="desc">{{ activity.description }}</p>
@@ -63,7 +61,7 @@ const emit = defineEmits(['close'])
   display: grid;
   place-items: center;
   padding: 18px;
-  background: rgba(14, 26, 46, .55);
+  background: rgba(14, 26, 46, 0.55);
 }
 
 .activity-modal {
@@ -74,7 +72,7 @@ const emit = defineEmits(['close'])
   padding: 30px;
   border-radius: 22px;
   background: #fff;
-  box-shadow: 0 24px 90px rgba(10, 20, 40, .35);
+  box-shadow: 0 24px 90px rgba(10, 20, 40, 0.35);
 }
 
 .close {
@@ -103,7 +101,7 @@ const emit = defineEmits(['close'])
   margin: 12px 0 8px;
   color: #102449;
   font-size: 25px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .period {

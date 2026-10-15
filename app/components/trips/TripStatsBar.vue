@@ -4,7 +4,7 @@ defineProps({
     type: Object,
     required: true
   }
-})
+});
 </script>
 
 <template>
@@ -45,7 +45,7 @@ defineProps({
   border: 1px solid #edf0f6;
   border-radius: 20px;
   background: #fff;
-  box-shadow: 0 10px 30px rgba(31, 51, 88, .04);
+  box-shadow: 0 10px 30px rgba(31, 51, 88, 0.04);
 }
 
 .stat {
@@ -59,7 +59,7 @@ defineProps({
 .stat strong {
   color: #102449;
   font-size: 21px;
-  letter-spacing: -.5px;
+  letter-spacing: -0.5px;
 }
 
 .stat span {

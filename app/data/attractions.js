@@ -21,6 +21,6 @@ export const attractions = [
     country: '希腊',
     image: '/images/3.jpg',
     description: '以白色建筑、蓝色圆顶和爱琴海风光闻名。',
-    tags:['海岛', '浪漫']
+    tags: ['海岛', '浪漫']
   }
-]
+];

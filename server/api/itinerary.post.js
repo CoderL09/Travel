@@ -1,179 +1,131 @@
-﻿import { askDeepSeek, validateMessages } from '../utils/deepseek.js'
-import { parseJson, extractRequirements, mergeTrip } from '../utils/requirements.js'
-
-const PERIOD_RULES = [
-  ['清晨', '上午'], ['早晨', '上午'], ['早上', '上午'], ['上午', '上午'],
-  ['正午', '下午'], ['中午', '下午'], ['午后', '下午'], ['下午', '下午'],
-  ['傍晚', '晚上'], ['黄昏', '晚上'], ['夜晚', '晚上'], ['夜间', '晚上'], ['晚上', '晚上'],
-  ['全天', '上午'], ['白天', '上午'], ['夜里', '晚上'], ['夜', '晚上'], ['晚', '晚上']
-]
-const normalizePeriod = (value) => {
-  const text = typeof value === 'string' ? value.trim() : ''
-  if (!text) return '上午'
-  for (const [pattern, mapped] of PERIOD_RULES) {
-    if (text.includes(pattern)) return mapped
-  }
-  return '上午'
-}
-const asString = (value, fallback = '') => {
-  if (typeof value === 'string') return value.trim() || fallback
-  if (value === undefined || value === null) return fallback
-  const text = String(value).trim()
-  return text || fallback
-}
-const cleanText = (value, max) => typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : undefined
-const sanitizeTags = (value) => {
-  if (typeof value === 'string') return value.trim() ? [value.trim().slice(0, 10)] : undefined
-  if (!Array.isArray(value)) return undefined
-  const tags = value.filter(t => t !== undefined && t !== null).map(t => String(t).trim()).filter(Boolean).map(t => t.slice(0, 10)).slice(0, 4)
-  return tags.length ? tags : undefined
-}
-const sanitizeActivity = (raw) => {
-  if (!raw || typeof raw !== 'object') return null
-  const name = asString(raw.name ?? raw.title)
-  if (!name) return null
-  return {
-    period: normalizePeriod(raw.period),
-    time: asString(raw.time),
-    name,
-    description: asString(raw.description),
-    location: asString(raw.location),
-    duration: asString(raw.duration),
-    tips: cleanText(raw.tips, 80),
-    transport: cleanText(raw.transport, 80),
-    cost: typeof raw.cost === 'number' ? `约${Math.round(raw.cost)}元` : cleanText(raw.cost, 20),
-    tags: sanitizeTags(raw.tags)
-  }
-}
-const sanitizeBudgetPlan = (plan) => {
-  if (!plan || typeof plan !== 'object') return undefined
-  const keys = ['交通', '住宿', '餐饮', '门票', '购物']
-  const cleaned = {}
-  let total = 0
-  for (const key of keys) {
-    const value = Number(plan[key])
-    if (Number.isFinite(value) && value > 0) {
-      cleaned[key] = Math.round(value)
-      total += Math.round(value)
-    }
-  }
-  if (!Object.keys(cleaned).length || total < 90 || total > 110) return undefined
-  return cleaned
-}
-function sanitizeItinerary(parsed, dayCount, fallbackDestination) {
-  if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.days) || parsed.days.length < 1) return null
-  const sourceDays = parsed.days.length > dayCount ? parsed.days.slice(0, dayCount) : parsed.days
-  const days = sourceDays.map((day, i) => {
-    const activities = Array.isArray(day?.activities) ? day.activities : []
-    const cleaned = []
-    for (let j = 0; j < activities.length && cleaned.length < 5; j++) {
-      const activity = sanitizeActivity(activities[j])
-      if (activity) cleaned.push(activity)
-    }
-    if (!cleaned.length) {
-      cleaned.push({ period: '上午', time: '09:00-12:00', name: '自由活动', description: '根据个人兴趣自由安排当天行程。', location: '', duration: '半天', tags: undefined })
-    }
-    return { title: asString(day?.title, `第${i + 1}天`), activities: cleaned }
-  })
-  return {
-    destination: asString(parsed.destination, fallbackDestination).slice(0, 100),
-    days,
-    guide: cleanText(parsed.guide, 100),
-    weatherHint: cleanText(parsed.weatherHint, 60),
-    packingList: Array.isArray(parsed.packingList) ? parsed.packingList.filter(item => item !== undefined && item !== null).map(item => String(item).trim()).filter(Boolean).map(item => item.slice(0, 30)).slice(0, 8) : undefined,
-    budgetPlan: sanitizeBudgetPlan(parsed.budgetPlan)
-  }
-}
+﻿import { askDeepSeek, validateMessages } from '../utils/deepseek.js';
+import { parseJson, extractRequirements, mergeTrip } from '../utils/requirements.js';
+import { sanitizeItinerary } from '../utils/itinerary-sanitize.js';
 
 function validateTrip(trip) {
-  if (!trip || typeof trip.destination !== 'string' || trip.destination.length > 100 ||
+  if (
+    !trip ||
+    typeof trip.destination !== 'string' ||
+    trip.destination.length > 100 ||
     !/^\d{4}-\d{2}-\d{2}$/.test(trip.startDate || '') ||
     !/^\d{4}-\d{2}-\d{2}$/.test(trip.endDate || '') ||
-    !Number.isInteger(trip.travelers) || trip.travelers < 1 || trip.travelers > 30 ||
-    typeof trip.budget !== 'number' || !Number.isFinite(trip.budget) || trip.budget < 0 ||
-    !Array.isArray(trip.preferences) || trip.preferences.length > 15 ||
-    trip.preferences.some(p => typeof p !== 'string' || p.length > 40)) {
-    throw createError({ statusCode: 400, message: '旅行信息格式错误，请先编辑旅行概览' })
+    !Number.isInteger(trip.travelers) ||
+    trip.travelers < 1 ||
+    trip.travelers > 30 ||
+    typeof trip.budget !== 'number' ||
+    !Number.isFinite(trip.budget) ||
+    trip.budget < 0 ||
+    !Array.isArray(trip.preferences) ||
+    trip.preferences.length > 15 ||
+    trip.preferences.some((p) => typeof p !== 'string' || p.length > 40)
+  ) {
+    throw createError({ statusCode: 400, message: '旅行信息格式错误，请先编辑旅行概览' });
   }
-  const start = Date.parse(`${trip.startDate}T12:00:00Z`)
-  const end = Date.parse(`${trip.endDate}T12:00:00Z`)
-  const dayCount = Math.round((end - start) / 86400000) + 1
+  const start = Date.parse(`${trip.startDate}T12:00:00Z`);
+  const end = Date.parse(`${trip.endDate}T12:00:00Z`);
+  const dayCount = Math.round((end - start) / 86400000) + 1;
   if (!Number.isFinite(dayCount) || dayCount < 1 || dayCount > 14) {
-    throw createError({ statusCode: 400, message: '行程日期应为 1 到 14 天' })
+    throw createError({ statusCode: 400, message: '行程日期应为 1 到 14 天' });
   }
-  return dayCount
+  return dayCount;
 }
 
-const FALLBACK_MESSAGE = '请根据当前旅行信息安排合理的行程。'
+const FALLBACK_MESSAGE = '请根据当前旅行信息安排合理的行程。';
 
-export default defineEventHandler(async event => {
-  const body = await readBody(event)
-  const messages = validateMessages(body?.messages)
-  const trip = body?.trip
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event);
+  const messages = validateMessages(body?.messages);
+  const trip = body?.trip;
   if (!trip || typeof trip !== 'object') {
-    throw createError({ statusCode: 400, message: '旅行信息格式错误，请先编辑旅行概览' })
+    throw createError({ statusCode: 400, message: '旅行信息格式错误，请先编辑旅行概览' });
   }
 
-  const hasRealConversation = messages.some(m => m.content !== FALLBACK_MESSAGE)
-  const requirement = hasRealConversation ? await extractRequirements(event, messages) : {}
-  const merged = mergeTrip(trip, requirement)
-  const dayCount = validateTrip(merged)
+  const hasRealConversation = messages.some((m) => m.content !== FALLBACK_MESSAGE);
+  const requirement = hasRealConversation ? await extractRequirements(event, messages) : {};
+  const merged = mergeTrip(trip, requirement);
+  const dayCount = validateTrip(merged);
 
-  const system = `你是中文旅行规划师。本次行程目的地：「${merged.destination}」。请只输出合法 JSON 对象，绝对不要 Markdown。必须包含字段 destination（字符串，必须严格等于「${merged.destination}」）和 days（数组，最好恰好 ${dayCount} 项）。days 每项结构为 {"day":1,"title":"当天主题","activities":[{"period":"上午","time":"09:00-11:00","name":"景点名","description":"简短介绍","location":"区域","duration":"2小时","tips":"游玩贴士","transport":"交通建议","cost":"人均参考花费","tags":["免费","网红"]}]}。day 从 1 开始连续递增。每天安排 1 到 3 个活动，所有活动必须位于「${merged.destination}」。period 建议使用上午、下午、晚上之一，也可以用清晨、中午、傍晚、全天等自然表达。cost 可以是字符串（如"约80元"）或数字。tips、transport、cost、tags 为可选字段，tags 可以是字符串数组或单个字符串。除上述字段外，还可输出顶层可选字段：guide（目的地攻略概览，不超过 100 字）、packingList（打包清单，3 到 8 个字符串）、weatherHint（季节天气与穿衣提示，不超过 60 字）、budgetPlan（对象，键为交通、住宿、餐饮、门票、购物，值为百分比整数且总和 100）。内容全部中文，活动真实合理。JSON 内容应简洁，每个描述不超过 35 个汉字。所有字符串值内部禁止出现英文双引号，需要引用时请使用中文引号「」或《》。不要编造实时价格或营业时间。请确保 JSON 完整闭合。`
-  const tripContext = `旅行信息：${JSON.stringify({ destination: merged.destination, startDate: merged.startDate, endDate: merged.endDate, travelers: merged.travelers, budget: merged.budget, preferences: merged.preferences })}。结合对话中的最新要求生成完整行程。只返回 JSON。`
+  const system = `你是中文旅行规划师。本次行程目的地：「${merged.destination}」。请只输出合法 JSON 对象，绝对不要 Markdown。必须包含字段 destination（字符串，必须严格等于「${merged.destination}」）和 days（数组，最好恰好 ${dayCount} 项）。days 每项结构为 {"day":1,"title":"当天主题","activities":[{"period":"上午","time":"09:00-11:00","name":"景点名","description":"简短介绍","location":"区域","duration":"2小时","tips":"游玩贴士","transport":"交通建议","cost":"人均参考花费","tags":["免费","网红"]}]}。day 从 1 开始连续递增。每天安排 1 到 3 个活动，所有活动必须位于「${merged.destination}」。period 建议使用上午、下午、晚上之一，也可以用清晨、中午、傍晚、全天等自然表达。cost 可以是字符串（如"约80元"）或数字。tips、transport、cost、tags 为可选字段，tags 可以是字符串数组或单个字符串。除上述字段外，还可输出顶层可选字段：guide（目的地攻略概览，不超过 100 字）、packingList（打包清单，3 到 8 个字符串）、weatherHint（季节天气与穿衣提示，不超过 60 字）、budgetPlan（对象，键为交通、住宿、餐饮、门票、购物，值为百分比整数且总和 100）。内容全部中文，活动真实合理。JSON 内容应简洁，每个描述不超过 35 个汉字。所有字符串值内部禁止出现英文双引号，需要引用时请使用中文引号「」或《》。不要编造实时价格或营业时间。请确保 JSON 完整闭合。`;
+  const tripContext = `旅行信息：${JSON.stringify({ destination: merged.destination, startDate: merged.startDate, endDate: merged.endDate, travelers: merged.travelers, budget: merged.budget, preferences: merged.preferences })}。结合对话中的最新要求生成完整行程。只返回 JSON。`;
   const requestMessages = [
     { role: 'system', content: system },
     ...messages,
     { role: 'user', content: tripContext }
-  ]
+  ];
 
-  const destinationKey = merged.destination.replace(/[，。、\s]/g, '').slice(0, 2)
+  const destinationKey = merged.destination.replace(/[，。、\s]/g, '').slice(0, 2);
   const destinationMatches = (text) => {
-    const value = String(text || '').replace(/[，。、\s]/g, '')
-    if (!value) return false
-    return value.includes(destinationKey) || (value.length >= 2 && destinationKey.includes(value.slice(0, 2)))
-  }
+    const value = String(text || '').replace(/[，。、\s]/g, '');
+    if (!value) return false;
+    return (
+      value.includes(destinationKey) ||
+      (value.length >= 2 && destinationKey.includes(value.slice(0, 2)))
+    );
+  };
 
-  let result
-  let destinationFixed = true
+  let result;
+  let destinationFixed = true;
   for (let attempt = 0; attempt < 2; attempt++) {
-    let content
+    let content;
     try {
-      content = await askDeepSeek(event, requestMessages, { json: true, maxTokens: 8192, timeout: 60000 })
+      content = await askDeepSeek(event, requestMessages, {
+        json: true,
+        maxTokens: 8192,
+        timeout: 60000
+      });
     } catch (error) {
-      if (attempt === 1) throw error
-      console.warn('AI 行程生成调用失败，第 1 次:', error?.message)
-      requestMessages.push({ role: 'user', content: '刚才的调用被中断了。请重新输出完整、简洁、合法的 JSON，不要解释，不要 Markdown。' })
-      continue
+      if (attempt === 1) throw error;
+      console.warn('AI 行程生成调用失败，第 1 次:', error?.message);
+      requestMessages.push({
+        role: 'user',
+        content: '刚才的调用被中断了。请重新输出完整、简洁、合法的 JSON，不要解释，不要 Markdown。'
+      });
+      continue;
     }
     try {
-      const parsed = parseJson(content)
-      const sanitized = sanitizeItinerary(parsed, dayCount, merged.destination)
+      const parsed = parseJson(content);
+      const sanitized = sanitizeItinerary(parsed, dayCount, merged.destination);
       if (!sanitized) {
-        console.warn('AI 行程缺少 days 数组，第', attempt + 1, '次')
-        requestMessages.push({ role: 'user', content: `刚才的 JSON 缺少 days 数组或 days 为空。请重新输出恰好 ${dayCount} 天的完整、简洁、合法 JSON，不要解释，不要 Markdown。注意：所有字符串值内部禁止出现未转义的英文双引号，需要引用时请使用中文引号「」或《》。` })
-        continue
+        console.warn('AI 行程缺少 days 数组，第', attempt + 1, '次');
+        requestMessages.push({
+          role: 'user',
+          content: `刚才的 JSON 缺少 days 数组或 days 为空。请重新输出恰好 ${dayCount} 天的完整、简洁、合法 JSON，不要解释，不要 Markdown。注意：所有字符串值内部禁止出现未转义的英文双引号，需要引用时请使用中文引号「」或《》。`
+        });
+        continue;
       }
       if (!destinationMatches(sanitized.destination)) {
-        console.warn('AI 行程目的地不一致，第', attempt + 1, '次:', sanitized.destination)
+        console.warn('AI 行程目的地不一致，第', attempt + 1, '次:', sanitized.destination);
         if (attempt === 0) {
-          requestMessages.push({ role: 'user', content: `目的地错了。本次行程目的地必须是「${merged.destination}」，请重新输出目的地为「${merged.destination}」的完整行程，所有活动都必须位于「${merged.destination}」。只输出合法 JSON。` })
-          continue
+          requestMessages.push({
+            role: 'user',
+            content: `目的地错了。本次行程目的地必须是「${merged.destination}」，请重新输出目的地为「${merged.destination}」的完整行程，所有活动都必须位于「${merged.destination}」。只输出合法 JSON。`
+          });
+          continue;
         }
-        destinationFixed = false
+        destinationFixed = false;
       }
-      result = sanitized
-      break
+      result = sanitized;
+      break;
     } catch (error) {
-      console.warn('AI JSON 解析失败，第', attempt + 1, '次:', error.message, '返回长度:', content.length)
-      requestMessages.push({ role: 'user', content: `刚才的 JSON 无法解析（${error.message}）。请只输出完整闭合的合法 JSON，不要解释，不要 Markdown，所有字符串值内部禁止出现英文双引号。` })
+      console.warn(
+        'AI JSON 解析失败，第',
+        attempt + 1,
+        '次:',
+        error.message,
+        '返回长度:',
+        content.length
+      );
+      requestMessages.push({
+        role: 'user',
+        content: `刚才的 JSON 无法解析（${error.message}）。请只输出完整闭合的合法 JSON，不要解释，不要 Markdown，所有字符串值内部禁止出现英文双引号。`
+      });
     }
   }
   if (!result) {
-    throw createError({ statusCode: 502, message: 'AI 行程格式仍不正确，请稍后重新生成' })
+    throw createError({ statusCode: 502, message: 'AI 行程格式仍不正确，请稍后重新生成' });
   }
   if (!destinationFixed) {
-    console.warn('AI 行程目的地经两次尝试仍不一致，使用旅行信息中的目的地')
+    console.warn('AI 行程目的地经两次尝试仍不一致，使用旅行信息中的目的地');
   }
 
   return {
@@ -207,5 +159,5 @@ export default defineEventHandler(async event => {
       packingList: result.packingList,
       budgetPlan: result.budgetPlan
     }
-  }
-})
+  };
+});

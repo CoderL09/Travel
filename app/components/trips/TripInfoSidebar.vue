@@ -1,39 +1,48 @@
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
-  trip: { type: Object, required: true }
-})
+  trip: { type: Object, required: true },
+  id: { type: String, default: '' },
+  weather: { type: Object, default: null },
+  weatherLoading: { type: Boolean, default: false },
+  weatherError: { type: String, default: '' }
+});
 
-const emit = defineEmits(['delete', 'print', 'toggle-pack'])
+const emit = defineEmits(['delete', 'print', 'toggle-pack', 'refresh-weather']);
 
 const packingList = computed(() => {
-  const list = props.trip.packingList
-  return Array.isArray(list) ? list : []
-})
+  const list = props.trip.packingList;
+  return Array.isArray(list) ? list : [];
+});
 
 const packedItems = computed(() => {
-  const packed = props.trip.packedItems
-  return Array.isArray(packed) ? packed : []
-})
+  const packed = props.trip.packedItems;
+  return Array.isArray(packed) ? packed : [];
+});
 
 const budgetPlan = computed(() => {
-  const plan = props.trip.budgetPlan
-  if (!plan || typeof plan !== 'object') return []
+  const plan = props.trip.budgetPlan;
+  if (!plan || typeof plan !== 'object') return [];
   return Object.entries(plan)
     .filter(([, value]) => Number.isFinite(Number(value)))
-    .map(([key, value]) => ({ key, value: Number(value) }))
-})
+    .map(([key, value]) => ({ key, value: Number(value) }));
+});
 
-const planColors = ['#3478ff', '#5a8dff', '#7ba8ff', '#a3c2ff', '#c7d9ff']
+const weatherDaily = computed(() => {
+  if (!props.weather || !Array.isArray(props.weather.daily)) return [];
+  return props.weather.daily;
+});
+
+const planColors = ['#3478ff', '#5a8dff', '#7ba8ff', '#a3c2ff', '#c7d9ff'];
 
 function isPacked(name) {
-  return packedItems.value.includes(name)
+  return packedItems.value.includes(name);
 }
 
 function formatDate(date) {
-  if (!date) return '待定'
-  return String(date).replaceAll('-', '.')
+  if (!date) return '待定';
+  return String(date).replaceAll('-', '.');
 }
 </script>
 
@@ -84,7 +93,12 @@ function formatDate(date) {
             <span>{{ item.value }}%</span>
           </div>
           <div class="plan-bar">
-            <i :style="{ width: item.value + '%', background: planColors[index % planColors.length] }"></i>
+            <i
+              :style="{
+                width: item.value + '%',
+                background: planColors[index % planColors.length]
+              }"
+            ></i>
           </div>
         </div>
       </div>
@@ -96,6 +110,39 @@ function formatDate(date) {
         <span class="side-rule"></span>
       </div>
       <p class="hint-text">◌ {{ trip.weatherHint }}</p>
+    </section>
+
+    <section class="side-card">
+      <div class="side-title">
+        <h2>天气预报</h2>
+        <span class="side-rule"></span>
+        <button
+          type="button"
+          class="weather-refresh"
+          :disabled="weatherLoading"
+          aria-label="刷新天气预报"
+          @click="emit('refresh-weather')"
+        >
+          ↻
+        </button>
+      </div>
+
+      <div v-if="weatherLoading" class="weather-state">正在获取天气…</div>
+      <div v-else-if="weatherError" class="weather-state error">{{ weatherError }}</div>
+      <div v-else-if="weatherDaily.length" class="weather-list">
+        <div v-for="day in weatherDaily" :key="day.date" class="weather-row">
+          <span class="w-date">{{ formatWeatherDate(day.date) }}</span>
+          <span class="w-icon">{{ weatherFor(day.code).icon }}</span>
+          <span class="w-desc">{{ weatherFor(day.code).label }}</span>
+          <span class="w-temp"
+            >{{ Math.round(day.tempMax) }}° / {{ Math.round(day.tempMin) }}°</span
+          >
+          <span v-if="Number.isFinite(day.rainProb)" class="w-rain">💧 {{ day.rainProb }}%</span>
+        </div>
+      </div>
+      <button v-else type="button" class="weather-fetch" @click="emit('refresh-weather')">
+        获取实时天气
+      </button>
     </section>
 
     <section v-if="packingList.length" class="side-card">
@@ -121,13 +168,10 @@ function formatDate(date) {
     </section>
 
     <section class="side-card actions">
-      <button type="button" class="side-action" @click="emit('print')">
-        ♢ 打印行程
-      </button>
+      <a v-if="id" class="side-action" :href="`/api/trips/${id}/ics`" download>▤ 导出日历</a>
+      <button type="button" class="side-action" @click="emit('print')">♢ 打印行程</button>
       <NuxtLink to="/plan" class="side-action link">✦ 前往规划页</NuxtLink>
-      <button type="button" class="side-action danger" @click="emit('delete')">
-        删除这份旅行
-      </button>
+      <button type="button" class="side-action danger" @click="emit('delete')">删除这份旅行</button>
     </section>
   </aside>
 </template>
@@ -242,6 +286,91 @@ function formatDate(date) {
   color: #7b889d;
   font-size: 13px;
   line-height: 1.8;
+}
+
+.weather-refresh {
+  border: 0;
+  background: #f3f6fb;
+  color: #52749f;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.weather-refresh:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.weather-refresh:hover {
+  background: #e8eef9;
+}
+
+.weather-state {
+  color: #7b889d;
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.weather-state.error {
+  color: #d0565e;
+}
+
+.weather-fetch {
+  border: 0;
+  background: #eaf0fc;
+  color: #3478ff;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.weather-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f8;
+  font-size: 12px;
+}
+
+.weather-row:last-child {
+  border-bottom: 0;
+}
+
+.w-date {
+  color: #61718d;
+  white-space: nowrap;
+  width: 48px;
+}
+
+.w-icon {
+  font-size: 15px;
+}
+
+.w-desc {
+  color: #334766;
+  flex: 1;
+  min-width: 0;
+}
+
+.w-temp {
+  color: #102449;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.w-rain {
+  color: #5a8dff;
+  white-space: nowrap;
 }
 
 .packing-list {

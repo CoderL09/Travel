@@ -1,14 +1,11 @@
 <script setup>
-const route = useRoute()
+const route = useRoute();
 </script>
 
 <template>
   <div>
-
     <nav v-if="route.path !== '/plan'" class="navbar">
-      <NuxtLink to="/" class="navbar-brand">
-        Travel AI
-      </NuxtLink>
+      <NuxtLink to="/" class="navbar-brand"> Travel AI </NuxtLink>
 
       <div class="navbar-links">
         <NuxtLink to="/">首页</NuxtLink>
@@ -20,9 +17,7 @@ const route = useRoute()
   </div>
 </template>
 
-
 <style>
-
 *,
 *::before,
 *::after {
@@ -31,7 +26,6 @@ const route = useRoute()
 </style>
 
 <style scoped>
-
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -40,21 +34,17 @@ const route = useRoute()
   padding: 20px 40px;
   box-sizing: border-box;
 
- 
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 10;
 
- 
   background-color: transparent;
 
   border: none;
   box-shadow: none;
 }
-
-
 
 .navbar-brand {
   font-size: 22px;
@@ -63,13 +53,11 @@ const route = useRoute()
   text-decoration: none;
 }
 
-
 .navbar-links {
   display: flex;
   align-items: center;
   gap: 30px;
 }
-
 
 .navbar-links a {
   font-size: 15px;
@@ -79,11 +67,9 @@ const route = useRoute()
   transition: color 0.3s ease;
 }
 
-
 .navbar-links a:hover {
   color: white;
 }
-
 
 .navbar-links a.router-link-exact-active {
   color: white;

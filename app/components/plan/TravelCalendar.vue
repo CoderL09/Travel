@@ -1,136 +1,109 @@
-
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed } from 'vue';
 
 // 当前显示的年月
-const today = new Date()
-const currentYear = ref(today.getFullYear())
-const currentMonth = ref(today.getMonth())
+const today = new Date();
+const currentYear = ref(today.getFullYear());
+const currentMonth = ref(today.getMonth());
 
 // 开始日期、结束日期
-const startDate = ref(null)
-const endDate = ref(null)
+const startDate = ref(null);
+const endDate = ref(null);
 
 // 生成当前月份的日历
 const calendarDays = computed(() => {
-  const firstDay = new Date(
-    currentYear.value,
-    currentMonth.value,
-    1
-  ).getDay()
+  const firstDay = new Date(currentYear.value, currentMonth.value, 1).getDay();
 
-  const totalDays = new Date(
-    currentYear.value,
-    currentMonth.value + 1,
-    0
-  ).getDate()
+  const totalDays = new Date(currentYear.value, currentMonth.value + 1, 0).getDate();
 
-  const emptyDays = Array(firstDay).fill(null)
+  const emptyDays = Array(firstDay).fill(null);
 
-  const days = Array.from(
-    { length: totalDays },
-    (_, index) => index + 1
-  )
+  const days = Array.from({ length: totalDays }, (_, index) => index + 1);
 
-  return [...emptyDays, ...days]
-})
+  return [...emptyDays, ...days];
+});
 
 // 上一个月
 function previousMonth() {
   if (currentMonth.value === 0) {
-    currentMonth.value = 11
-    currentYear.value--
+    currentMonth.value = 11;
+    currentYear.value--;
   } else {
-    currentMonth.value--
+    currentMonth.value--;
   }
 }
 
 // 下一个月
 function nextMonth() {
   if (currentMonth.value === 11) {
-    currentMonth.value = 0
-    currentYear.value++
+    currentMonth.value = 0;
+    currentYear.value++;
   } else {
-    currentMonth.value++
+    currentMonth.value++;
   }
 }
 
 // 点击日期
 function selectDate(day) {
-  if (day === null) return
+  if (day === null) return;
 
-  const clickedDate = new Date(
-    currentYear.value,
-    currentMonth.value,
-    day
-  )
+  const clickedDate = new Date(currentYear.value, currentMonth.value, day);
 
   if (!startDate.value) {
     // 第一次点击：选择开始日期
-    startDate.value = clickedDate
+    startDate.value = clickedDate;
   } else if (!endDate.value) {
     // 第二次点击：选择结束日期
     if (clickedDate < startDate.value) {
       // 如果结束日期更早，交换日期
-      endDate.value = startDate.value
-      startDate.value = clickedDate
+      endDate.value = startDate.value;
+      startDate.value = clickedDate;
     } else {
-      endDate.value = clickedDate
+      endDate.value = clickedDate;
     }
   } else {
     // 第三次点击：重新开始选择
-    startDate.value = clickedDate
-    endDate.value = null
+    startDate.value = clickedDate;
+    endDate.value = null;
   }
 }
 
 // 判断是否为开始日期
 function isStartDate(day) {
   if (day === null || !startDate.value) {
-    return false
+    return false;
   }
 
   return (
     currentYear.value === startDate.value.getFullYear() &&
     currentMonth.value === startDate.value.getMonth() &&
     day === startDate.value.getDate()
-  )
+  );
 }
 
 // 判断是否为结束日期
 function isEndDate(day) {
   if (day === null || !endDate.value) {
-    return false
+    return false;
   }
 
   return (
     currentYear.value === endDate.value.getFullYear() &&
     currentMonth.value === endDate.value.getMonth() &&
     day === endDate.value.getDate()
-  )
+  );
 }
 
 // 判断是否在开始日期和结束日期之间
 // 不包含开始日期和结束日期本身
 function isInRange(day) {
-  if (
-    day === null ||
-    !startDate.value ||
-    !endDate.value
-  ) {
-    return false
+  if (day === null || !startDate.value || !endDate.value) {
+    return false;
   }
 
-  const date = new Date(
-    currentYear.value,
-    currentMonth.value,
-    day
-  )
+  const date = new Date(currentYear.value, currentMonth.value, day);
 
-  return (
-    date > startDate.value &&
-    date < endDate.value
-  )
+  return date > startDate.value && date < endDate.value;
 }
 </script>
 
@@ -143,25 +116,11 @@ function isInRange(day) {
 
     <!-- 月份切换 -->
     <div class="month-navigation">
-      <button
-        type="button"
-        class="nav-button"
-        @click="previousMonth"
-      >
-        ‹
-      </button>
+      <button type="button" class="nav-button" @click="previousMonth">‹</button>
 
-      <span class="month-title">
-        {{ currentYear }} 年 {{ currentMonth + 1 }} 月
-      </span>
+      <span class="month-title"> {{ currentYear }} 年 {{ currentMonth + 1 }} 月 </span>
 
-      <button
-        type="button"
-        class="nav-button"
-        @click="nextMonth"
-      >
-        ›
-      </button>
+      <button type="button" class="nav-button" @click="nextMonth">›</button>
     </div>
 
     <!-- 星期 -->

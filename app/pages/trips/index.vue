@@ -1,72 +1,58 @@
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useTrips } from '~/composables/useTrips'
-import TripCard from '~/components/trips/TripCard.vue'
+import { ref, computed, onMounted } from 'vue';
+import { useTrips } from '~/composables/useTrips';
+import TripCard from '~/components/trips/TripCard.vue';
 
-const { trips, loadTrips, deleteTrip } = useTrips()
+const { trips, loadTrips, deleteTrip } = useTrips();
 
-const keyword = ref('')
-const activeFilter = ref('全部')
-const ready = ref(false)
+const keyword = ref('');
+const activeFilter = ref('全部');
+const ready = ref(false);
 
-const filters = [
-  '全部',
-  '即将出发',
-  '旅行中',
-  '已结束',
-  '草稿'
-]
+const filters = ['全部', '即将出发', '旅行中', '已结束', '草稿'];
 
 onMounted(async () => {
-  await loadTrips()
-  ready.value = true
-})
+  await loadTrips();
+  ready.value = true;
+});
 
 function getStatus(record) {
-  const start = record.trip?.startDate
-  const end = record.trip?.endDate
+  const start = record.trip?.startDate;
+  const end = record.trip?.endDate;
 
-  if (!start || !end) return '草稿'
+  if (!start || !end) return '草稿';
 
-  const now = new Date()
+  const now = new Date();
   const today = [
     now.getFullYear(),
     String(now.getMonth() + 1).padStart(2, '0'),
     String(now.getDate()).padStart(2, '0')
-  ].join('-')
+  ].join('-');
 
-  if (today < start) return '即将出发'
-  if (today > end) return '已结束'
-  return '旅行中'
+  if (today < start) return '即将出发';
+  if (today > end) return '已结束';
+  return '旅行中';
 }
 
 const filteredTrips = computed(() => {
-  return trips.value.filter(record => {
-    const searchText = [
-      record.title,
-      record.trip?.destination
-    ].join(' ').toLowerCase()
+  return trips.value.filter((record) => {
+    const searchText = [record.title, record.trip?.destination].join(' ').toLowerCase();
 
-    const matchesKeyword = searchText.includes(
-      keyword.value.trim().toLowerCase()
-    )
+    const matchesKeyword = searchText.includes(keyword.value.trim().toLowerCase());
 
-    const matchesFilter =
-      activeFilter.value === '全部' ||
-      getStatus(record) === activeFilter.value
+    const matchesFilter = activeFilter.value === '全部' || getStatus(record) === activeFilter.value;
 
-    return matchesKeyword && matchesFilter
-  })
-})
+    return matchesKeyword && matchesFilter;
+  });
+});
 
 async function handleDelete(id) {
   if (window.confirm('确定删除这条旅行计划吗？')) {
     try {
-      await deleteTrip(id)
+      await deleteTrip(id);
     } catch (error) {
-      console.error('删除旅行失败：', error)
-      window.alert(error?.data?.message || '删除失败，请稍后重试')
+      console.error('删除旅行失败：', error);
+      window.alert(error?.data?.message || '删除失败，请稍后重试');
     }
   }
 }
@@ -101,11 +87,7 @@ async function handleDelete(id) {
           </button>
         </div>
 
-        <input
-          v-model="keyword"
-          class="search-input"
-          placeholder="搜索目的地或旅行名称..."
-        >
+        <input v-model="keyword" class="search-input" placeholder="搜索目的地或旅行名称..." />
       </section>
 
       <section v-if="ready && filteredTrips.length" class="trip-grid">
@@ -130,13 +112,7 @@ async function handleDelete(id) {
           }}
         </p>
 
-        <NuxtLink
-          v-if="!trips.length"
-          to="/plan"
-          class="empty-link"
-        >
-          开始规划 →
-        </NuxtLink>
+        <NuxtLink v-if="!trips.length" to="/plan" class="empty-link"> 开始规划 → </NuxtLink>
       </section>
     </div>
   </main>
