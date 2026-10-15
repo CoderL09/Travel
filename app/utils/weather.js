@@ -34,6 +34,19 @@ export function weatherFor(code) {
   return WEATHER_META[code] || { icon: '🌡️', label: '未知' };
 }
 
+export function isClimateDay(day) {
+  return day && (day.code === null || day.code === undefined);
+}
+
+export function weatherDayLabel(day) {
+  if (!day || isClimateDay(day)) {
+    if (Number.isFinite(day?.rainSum) && day.rainSum > 0.5) return { icon: '☔', label: '常有雨' };
+    if (Number.isFinite(day?.rainSum)) return { icon: '🌤️', label: '基本无雨' };
+    return { icon: '📅', label: '气候常态' };
+  }
+  return weatherFor(day.code);
+}
+
 export function formatWeatherDate(dateText) {
   const match = String(dateText || '').match(/(\d{4})-(\d{2})-(\d{2})/);
   if (!match) return dateText;

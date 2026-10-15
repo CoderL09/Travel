@@ -1,4 +1,5 @@
 import { usePrisma } from '../../../utils/prisma.js';
+import { destinationCandidates } from '../../../utils/geo.js';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -25,10 +26,11 @@ function mergeDaily(target, data) {
   for (let i = 0; i < time.length; i++) {
     target[time[i]] = {
       date: time[i],
-      code: data.daily.weather_code?.[i],
+      code: data.daily.weather_code?.[i] ?? null,
       tempMax: data.daily.temperature_2m_max?.[i],
       tempMin: data.daily.temperature_2m_min?.[i],
-      rainProb: data.daily.precipitation_probability_max?.[i]
+      rainProb: data.daily.precipitation_probability_max?.[i] ?? null,
+      rainSum: data.daily.precipitation_sum?.[i] ?? null
     };
   }
 }
@@ -56,22 +58,49 @@ export default defineEventHandler(async (event) => {
     cached &&
     typeof cached === 'object' &&
     Array.isArray(cached.daily) &&
+    cached.daily.length &&
+    cached.daily.every((day) => Object.prototype.hasOwnProperty.call(day, 'rainSum')) &&
     cached.generatedAt &&
     Date.now() - new Date(cached.generatedAt).getTime() < 6 * 3600 * 1000;
   if (cacheFresh) {
     return { ...cached, cached: true };
   }
 
-  const geo = await $fetch('https://nominatim.openstreetmap.org/search', {
-    query: { q: destination, format: 'json', limit: 1, 'accept-language': 'zh' },
-    headers: { 'User-Agent': 'NexusTravelAI/1.0 (travel planner demo)' },
-    retry: false
-  });
-  const place = Array.isArray(geo) ? geo[0] : null;
+  let place = null;
+  let lastGeocodeError = '';
+  for (const candidate of destinationCandidates(destination)) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const geo = await $fetch('https://nominatim.openstreetmap.org/search', {
+          query: { q: candidate, format: 'json', limit: 1, 'accept-language': 'zh' },
+          headers: { 'User-Agent': 'NexusTravelAI/1.0 (travel planner demo)' },
+          retry: false
+        });
+        if (Array.isArray(geo) && geo.length) {
+          place = geo[0];
+          break;
+        }
+        lastGeocodeError = `「${candidate}」无匹配结果`;
+        break;
+      } catch (error) {
+        lastGeocodeError = `「${candidate}」地理编码失败（${error?.statusCode || error?.status || error?.message}）`;
+        if (attempt === 0 && [403, 429].includes(error?.statusCode)) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          continue;
+        }
+        break;
+      }
+    }
+    if (place) break;
+  }
+
   const latitude = Number(place?.lat);
   const longitude = Number(place?.lon);
   if (!place || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    throw createError({ statusCode: 502, message: '无法定位该目的地，请稍后重试' });
+    throw createError({
+      statusCode: 502,
+      message: `无法定位「${destination}」：${lastGeocodeError || '请修改旅行目的地或稍后重试'}`
+    });
   }
 
   const range = dateRange(startText, endText);
@@ -115,7 +144,7 @@ export default defineEventHandler(async (event) => {
       query: {
         latitude,
         longitude,
-        daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+        daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum',
         timezone: 'auto',
         start_date: farFuture[0],
         end_date: farFuture[farFuture.length - 1]
@@ -133,7 +162,7 @@ export default defineEventHandler(async (event) => {
   const weatherData = {
     destination:
       String(place.display_name || destination)
-        .split(',')[0]
+        .split(/[,;]/)[0]
         .trim() || destination,
     daily,
     generatedAt: new Date().toISOString()

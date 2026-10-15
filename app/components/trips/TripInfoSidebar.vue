@@ -132,13 +132,14 @@ function formatDate(date) {
       <div v-else-if="weatherDaily.length" class="weather-list">
         <div v-for="day in weatherDaily" :key="day.date" class="weather-row">
           <span class="w-date">{{ formatWeatherDate(day.date) }}</span>
-          <span class="w-icon">{{ weatherFor(day.code).icon }}</span>
-          <span class="w-desc">{{ weatherFor(day.code).label }}</span>
-          <span class="w-temp"
-            >{{ Math.round(day.tempMax) }}° / {{ Math.round(day.tempMin) }}°</span
-          >
+          <span class="w-icon">{{ weatherDayLabel(day).icon }}</span>
+          <span class="w-desc">{{ weatherDayLabel(day).label }}</span>
+          <span class="w-temp">{{ Math.round(day.tempMax) }}° / {{ Math.round(day.tempMin) }}°</span>
           <span v-if="Number.isFinite(day.rainProb)" class="w-rain">💧 {{ day.rainProb }}%</span>
         </div>
+        <p v-if="weatherDaily.some((day) => isClimateDay(day))" class="weather-note">
+          超出 16 天预报范围，以上为历史气候常态，仅供参考
+        </p>
       </div>
       <button v-else type="button" class="weather-fetch" @click="emit('refresh-weather')">
         获取实时天气
@@ -371,6 +372,13 @@ function formatDate(date) {
 .w-rain {
   color: #5a8dff;
   white-space: nowrap;
+}
+
+.weather-note {
+  margin: 8px 0 0;
+  color: #98a5ba;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .packing-list {
