@@ -39,21 +39,13 @@ AI 驱动的旅行规划应用：通过中文对话生成个性化行程、目�
 
 ## 功能演示
 
-### 界面预览
+### 视频演示
 
-| 首页 | AI 规划页 |
-| --- | --- |
-| ![首页](docs/screenshots/home.png) | ![规划页](docs/screenshots/plan.png) |
+![Nexus Travel AI 功能演示](docs/demo/demo.gif)
 
-| 我的旅行 | 旅行详情（攻略 + 天气） |
-| --- | --- |
-| ![我的旅行](docs/screenshots/trips.png) | ![详情页](docs/screenshots/trip-detail.png) |
+> 完整视频：[下载 MP4（清晰版）](docs/demo/demo.mp4)
 
-移动端适配：
-
-| 手机首页 | 手机规划页 |
-| --- | --- |
-| ![手机首页](docs/screenshots/mobile-home.png) | ![手机规划页](docs/screenshots/mobile-plan.png) |
+演示内容：对话规划（大阪 3 天）→ AI 生成逐日行程 → 编辑与保存 → 行程列表 → 详情页勾选活动 → 生成 AI 攻略（每日行程详解）。
 
 ### 本地运行演示
 
